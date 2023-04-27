@@ -47,7 +47,7 @@
 #include "sdspisim.h"
 
 static	const unsigned
-	MICROSECONDS = 80, // Clocks in a microsecond
+	MICROSECONDS = 50, // Clocks in a microsecond
 	MILLISECONDS = MICROSECONDS * 1000,
 	tRESET = 4*MILLISECONDS, // Just a wild guess
 	LGSECTOR_SIZE = 9,
@@ -409,8 +409,8 @@ int	SDSPISIM::operator()(const int csn, const int sck, const int mosi) {
 				// {{{
 				m_altcmd_flag = false;
 				memset(m_rspbuf, 0x0ff, SDSPI_RSPLEN);
-				if (m_debug) printf("SDSPI: Received a command 0x%02x (%d)\n",
-					m_cmdbuf[0], m_cmdbuf[0]&0x03f);
+				if (m_debug) printf("SDSPI: Received a command 0x%02x (%d) arg 0x%x\n",
+					m_cmdbuf[0], m_cmdbuf[0]&0x03f, arg);
 				switch(m_cmdbuf[0]&0x3f) {
 				case  0: // CMD0  -- GO_IDLE_STATE
 					m_rspbuf[0] = 0x01;
@@ -424,7 +424,7 @@ int	SDSPISIM::operator()(const int csn, const int sck, const int mosi) {
 					m_host_supports_high_capacity = (m_cmdbuf[1]&0x40)?1:0;
 					break;
 				case  8: // CMD8  -- SEND_IF_COND
-					assert((arg&0x0fffff000) == 0);
+					assert((arg&0xfffff000) == 0);
 					m_rspbuf[0] = 0x00;
 					// See p82 for this format
 					m_rspbuf[1] = 0;
