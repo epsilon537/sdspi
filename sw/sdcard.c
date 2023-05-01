@@ -38,25 +38,22 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
 // }}}
-// #define	STDIO_DEBUG
-#ifdef	STDIO_DEBUG
+
 #include <stdio.h>
 #include <stdlib.h>
 
+#define zip_halt()  while(1)
 #define	txstr(A)	printf("%s", A)
 #define	txhex(A)	printf("%08x", A)
 
-#else
-// Embedded I/O functions txstr() and txhex
-#include "txfns.h"
-#endif
+// #define	STDIO_DEBUG
 
 #include "board.h"
 
 #include "sdcard.h"
-#include "zipsys.h"
+//#include "zipsys.h"
 
-#include <zipcpu.h>
+//#include <zipcpu.h>
 
 
 #define	SDSPI_READREG	0x0200	// Expect an R3 or R7 response (R1 + 32-bits)
@@ -79,7 +76,7 @@ const int	SDUSEDMA = 0;
 //
 // If defined, references the address of a WBSCOPE on the bus which can be used
 // for debugging various interactions
-#define		SCOPE	_scope_sdcard
+// #define		SCOPE	_scope_sdcard
 
 //
 //
@@ -547,7 +544,7 @@ int	sdcard_init(void) {
 		SCOPE->s_ctrl = WBSCOPE_TRIGGER | SCOPEDELAY;
 #endif
 		txstr("No response from card to reset command\n");
-		*_gpio = GPIO_SET(GPIO_SD_RESET);
+		//*_gpio = GPIO_SET(GPIO_SD_RESET);
 		sdcard_err |= SDERR_INIT | 0x800;
 		return -1;
 	}

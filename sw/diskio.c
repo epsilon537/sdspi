@@ -43,7 +43,7 @@
 #include "sdcard.h"
 
 // #define	STDIO_DEBUG
-#include "zipcpu.h"
+//#include "zipcpu.h"
 
 #ifdef	STDIO_DEBUG
 #include <stdio.h>
