@@ -313,8 +313,10 @@ zip_halt();
 zip_halt();
 	}
 
-	for(i=0; i<4; i++)
-		ucsd[i] = _sdcard->sd_fifo[0];
+	for(i=0; i<4; i++) {
+		unsigned w = _sdcard->sd_fifo[0];
+		ucsd[i] = ENDIAN_CAST_UNSIGNED(w);
+	}
 
 	if (SDINFO) {
 		txstr("CSD: ");
@@ -422,8 +424,10 @@ int	sdcard_read_cid(char *cid) {
 	SDSPI_WAIT_WHILE_BUSY;
 
 	// Read out the CID
-	for(i=0; i<4; i++)
-		ucid[i] = _sdcard->sd_fifo[0];
+	for(i=0; i<4; i++) {
+		unsigned w = _sdcard->sd_fifo[0];
+		ucid[i] = ENDIAN_CAST_UNSIGNED(w);
+	}
 
 	if (1 || SDINFO) {
 		txstr("CID: ");
@@ -947,8 +951,10 @@ int	sdcard_read(int sector, char *buf) {
 		CLEAR_CACHE;
 	} else
 #endif
-		for(j=0; j<512/4; j++)
-			ubuf[j] = _sdcard->sd_fifo[0];
+		for(j=0; j<512/4; j++) {
+			unsigned w = _sdcard->sd_fifo[0];	
+			ubuf[j] = ENDIAN_CAST_UNSIGNED(w);
+		}
 
 	if (SDDEBUG && SDINFO)
 		sdcard_dump_sector(ubuf);
@@ -1002,7 +1008,7 @@ int	sdcard_write(const int sector, const char *buf) {
 	} else
 #endif
 		for(int i=0; i<512/4; i++)
-			_sdcard->sd_fifo[0] = ubuf[i];
+			_sdcard->sd_fifo[0] = ENDIAN_CAST_UNSIGNED(ubuf[i]);
 
 	_sdcard->sd_data = sector;
 	_sdcard->sd_ctrl = SDSPI_WRITE_SECTOR;
