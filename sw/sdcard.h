@@ -77,10 +77,18 @@ extern	char	sdcard_cid[16];
 
 extern	int	sdcard_read_ocr(void);
 extern	int	sdcard_read_scr(unsigned *scr);
+
+/*Note: the csd buffer has to be 32-bit word aligned.*/
 extern	int	sdcard_read_csd(char *csd);
+
+/*Note: the cid buffer has to be 32-bit word aligned.*/
 extern	int	sdcard_read_cid(char *cid);
 extern	int	sdcard_init(void);
+
+/*Note: buf has to be 32-bit word aligned.*/
 extern	int	sdcard_read(int sector, char *buf);
+
+/*Note: buf has to be 32-bit word aligned.*/
 extern	int	sdcard_write(int sector, const char *buf);
 
 #else
