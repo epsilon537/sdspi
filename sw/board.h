@@ -35,7 +35,7 @@ static volatile SDSPI *const _sdcard = ((SDSPI *)0x10000020);
 #define SDSPI_BIG_ENDIAN 0
 #define SDSPI_LITTLE_ENDIAN 1
 
-#define SDSPI_IP_ENDIANNESS SDSPI_BIG_ENDIAN
+#define SDSPI_IP_ENDIANNESS SDSPI_LITTLE_ENDIAN
 
 #if (!(defined SDSPI_CPU_IS_BIG_ENDIAN) && !(defined SDSPI_CPU_IS_LITTLE_ENDIAN))
 #error "CPU endianness not set: define SDSPI_CPU_IS_BIG_ENDIAN or SDSPI_CPU_IS_LITTLE_ENDIAN"

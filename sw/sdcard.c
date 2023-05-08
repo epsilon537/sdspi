@@ -41,6 +41,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #define zip_halt()  while(1)
 #define	txstr(A)	printf("%s", A)
@@ -272,6 +273,9 @@ int	sdcard_read_csd(char *csd) {
 	int		i;
 	unsigned	v;
 
+	/*csd buffer needs to be word aligned*/
+	assert((((unsigned)csd) & 0x3) == 0);
+
 	if (sdcard_err != 0)
 		return -1;
 
@@ -385,6 +389,9 @@ int	sdcard_read_cid(char *cid) {
 
 	if (SDDEBUG)
 		txstr("READ-CID\n");
+
+	/*cid buffer needs to be word aligned*/
+	assert((((unsigned)cid) & 0x3) == 0);
 
 	// CMD10 : SEND_CID_COND
 	// Send CID condition to FIFO #1 (Requires reading from FIFO)
@@ -918,6 +925,9 @@ int	sdcard_read(int sector, char *buf) {
 	unsigned	*ubuf = (unsigned *)buf;
 	int		j;
 
+	/*buf needs to be word aligned*/
+	assert((((unsigned)buf) & 0x3) == 0);
+
 	if (SDDEBUG) {
 		txstr("SDCARD-READ: ");
 		txhex(sector);
@@ -974,6 +984,9 @@ int	sdcard_read(int sector, char *buf) {
 int	sdcard_write(const int sector, const char *buf) {
 	const unsigned *ubuf = (unsigned *)buf;
 	unsigned	vc, vd;
+
+	/*buf needs to be word aligned*/
+	assert((((unsigned)buf) & 0x3) == 0);
 
 	if (SDDEBUG) {
 		txstr("SDCARD-WRITE: ");
