@@ -14,10 +14,10 @@
 ##
 ################################################################################
 ## }}}
-## Copyright (C) 2019-2022, Gisselquist Technology, LLC
+## Copyright (C) 2019-2023, Gisselquist Technology, LLC
 ## {{{
 ## This program is free software (firmware): you can redistribute it and/or
-## modify it under the terms of  the GNU General Public License as published
+## modify it under the terms of the GNU General Public License as published
 ## by the Free Software Foundation, either version 3 of the License, or (at
 ## your option) any later version.
 ##
@@ -61,7 +61,7 @@ all: $(PROGRAMS)
 SOURCES := autotest_tb.cpp sdspisim.cpp
 HEADERS := sdspisim.h wb_tb.h testb.h
 OBJECTS := $(addprefix $(OBJDIR)/,$(subst .cpp,.o,$(SOURCES)))
-VLSRCS  := verilated.cpp verilated_vcd_c.cpp
+VLSRCS  := verilated.cpp verilated_vcd_c.cpp verilated_threads.cpp
 VLOBJS  := $(addprefix $(OBJDIR)/,$(subst .cpp,.o,$(VLSRCS)))
 VLIBS   := $(RTLD)/obj_dir/Vsdspi__ALL.a
 
@@ -79,7 +79,7 @@ $(OBJDIR)/%.o: $(VROOT)/include/%.cpp
 ## autotest_tb
 ## {{{
 autotest_tb: $(OBJECTS) $(VLIBS) $(VLOBJS)
-	$(CXX) $(CFLAGS) $(OBJECTS) $(VLIBS) $(VLOBJS) -o $@
+	$(CXX) $(CFLAGS) $(OBJECTS) $(VLIBS) $(VLOBJS) -lpthread -o $@
 ## }}}
 
 ## test
