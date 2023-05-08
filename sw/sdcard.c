@@ -928,7 +928,7 @@ int	sdcard_read(int sector, char *buf) {
 		return -1;
 	}
 
-	// 512 byte block length, 25MHz clock
+	// 512 byte block length, 12.5MHz clock
 	//
 	_sdcard->sd_data = SECTOR_512B | SPEED_FAST;
 	_sdcard->sd_ctrl = SDSPI_SETAUX;

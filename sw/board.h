@@ -32,7 +32,16 @@ typedef	struct SDSPI_S {
 
 static volatile SDSPI *const _sdcard = ((SDSPI *)0x10000020);
 
-#ifdef BIG_ENDIAN_CPU
+#define BIG_ENDIAN 0
+#define LITTLE_ENDIAN 1
+
+#define SDSPI_IP_ENDIANNESS BIG_ENDIAN
+
+#ifndef SDSPI_CPU_ENDIANNESS
+#error "SDSPI_CPU_ENDIANNESS not defined!"
+#endif /*SDSPI_CPU_ENDIANNESS*/
+
+#if SDSPI_CPU_ENDIANNESS == SDSPI_IP_ENDIANNES
 #define ENDIAN_CAST_UNSIGNED(w) (w)
 #else
 #define ENDIAN_CAST_UNSIGNED(w) (((w&0x000000ff)<<24) | ((w&0x0000ff00)<<8) | ((w&0x00ff0000)>>8) | ((w&0xff000000)>>24))

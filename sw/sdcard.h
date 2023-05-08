@@ -49,17 +49,15 @@
 #define	SDERR_WRITE	0x002
 #define	SDERR_INIT	0x010
 
-#define	SPEED_25MHZ	0x01
-#define	SPEED_17MHZ	0x02
-#define	SPEED_12MHZ	0x03
-#define	SPEED_10MHZ	0x04
-#define	SPEED_400KHZ	0x7c
-#define	SPEED_200KHZ	0xf9
-#define	SPEED_100KHZ	0x1f3
+#define	SPEED_12MHZ	0x01
+#define	SPEED_8MHZ	0x02
+#define	SPEED_6MHZ	0x03
+#define	SPEED_5MHZ	0x04
+#define	SPEED_400KHZ	0x3e
+#define	SPEED_200KHZ	0x7c
+#define	SPEED_100KHZ	0xf9
 #define	SPEED_SLOW	SPEED_400KHZ
-#define	SPEED_FAST	SPEED_25MHZ
-// #define	SPEED_FAST	SPEED_17MHZ
-// #define	SPEED_FAST	SPEED_400KHZ
+#define	SPEED_FAST	SPEED_12MHZ
 
 #define	SECTOR_8B	0x030000	// Used by SCR register
 #define	SECTOR_16B	0x040000	// CSD and CID registers
