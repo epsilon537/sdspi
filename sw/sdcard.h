@@ -13,6 +13,8 @@
 // Creator:	Dan Gisselquist, Ph.D.
 //		Gisselquist Technology, LLC
 //
+// Modifications for BoxLambda by epsilon537
+//
 ////////////////////////////////////////////////////////////////////////////////
 // }}}
 // Copyright (C) 2016-2023, Gisselquist Technology, LLC
@@ -74,6 +76,16 @@ extern	char	sdcard_csd[16];
 extern	char	sdcard_cid[16];
 
 #ifdef	_BOARD_HAS_SDSPI
+
+/* BoxLambda:
+ * Acknowledge/Clear an SDCard interrupt. See SDCARD_IRQ in board.h
+ * for bit definitions. */
+extern void sdcard_irq_clr(unsigned irq_mask);
+
+/* BoxLambda:
+ * Enable an SDCard interrupt. See SDCARD_IRQ in board.h
+ * for bit definitions. */
+extern void sdcard_ien(unsigned irq_mask);
 
 extern	int	sdcard_read_ocr(void);
 extern	int	sdcard_read_scr(unsigned *scr);

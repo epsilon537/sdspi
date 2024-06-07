@@ -87,12 +87,7 @@ module sdspi #(
     parameter  [           0:0] OPT_SPI_ARBITRATION = 1'b0,
     // }}}
     //
-    //
-    parameter  [           0:0] OPT_EXTRA_WB_CLOCK  = 1'b0,
-    //
-    //
-    //
-    localparam                  AW                  = 2,
+    localparam                  AW                  = 3,
                                 DW                  = 32
     // }}}
 ) (
@@ -120,7 +115,7 @@ module sdspi #(
     i_card_detect,
     // }}}
     // Our interrupt
-    output  reg    o_int,
+    output wire   o_int,
     // .. and whether or not we can use the SPI port
     input  wire    i_bus_grant,
     // And some wires for debugging it all
@@ -131,12 +126,17 @@ module sdspi #(
 
   // Signal / parameter declarations
   // {{{
-  localparam [1:0]  SDSPI_CMD_ADDRESS = 2'b00,
-        SDSPI_DAT_ADDRESS = 2'b01,
-        SDSPI_FIFO_A_ADDR = 2'b10,
-        SDSPI_FIFO_B_ADDR = 2'b11;
+  localparam [2:0]  SDSPI_CMD_ADDRESS = 3'b000,
+        SDSPI_DAT_ADDRESS = 3'b001,
+        SDSPI_FIFO_A_ADDR = 3'b010,
+        SDSPI_FIFO_B_ADDR = 3'b011,
+        SDSPI_ISR_ADDRESS = 3'b100,
+        SDSPI_IEN_ADDRESS = 3'b101;
 
   localparam BLKBASE = 16;
+
+  //isr/ien register bit definitions.
+  localparam IRQ_BUSY_BIT = 0, IRQ_CARD_REMOVED_BIT = 1;
 
   //
   // Command register bit definitions
@@ -151,10 +151,10 @@ module sdspi #(
 
   reg dbg_trigger;
 
-  wire wb_stb, write_stb, wb_cmd_stb, new_data;
+  wire wb_stb, write_stb, wb_cmd_stb, wb_isr_stb, wb_ien_stb, new_data;
   wire  [AW-1:0]  wb_addr;
   wire  [DW-1:0]  wb_data;
-  reg  [1:0]  pipe_addr;
+  reg  [AW-1:0]  pipe_addr;
   reg    dly_stb;
 
   reg  [31:0]  fifo_a  [0:((1<<LGFIFOLN)-1)];
@@ -210,58 +210,20 @@ module sdspi #(
   wire [7:0] tx_response;
 
   reg last_busy;
-
+  reg [1:0] isr, ien;
 
   // }}}
 
-  // Take an extra wishbone clock?
-  // {{{
-  generate
-    if (!OPT_EXTRA_WB_CLOCK) begin : EXTRA_WB_PASSTHROUGH
-      // {{{
-      assign wb_stb = ((i_wb_stb) && (!o_wb_stall));
-      assign write_stb = ((wb_stb) && (i_wb_we));
-      // assign  read_stb  = ((wb_stb)&&(!i_wb_we));
-      assign wb_cmd_stb = (!r_cmd_busy) && (write_stb) && (i_wb_addr == SDSPI_CMD_ADDRESS);
-      assign wb_addr = i_wb_addr;
-      assign wb_data = i_wb_data;
-      assign  new_data = (i_wb_stb)&&(!o_wb_stall)&&(i_wb_we)
-        &&(i_wb_addr == SDSPI_DAT_ADDRESS);
-      // }}}
-    end else begin : GEN_EXTRA_WB_CLOCK
-      // {{{
-      reg r_wb_stb, r_write_stb, r_wb_cmd_stb, r_new_data;
-      reg [AW-1:0] r_wb_addr;
-      reg [DW-1:0] r_wb_data;
+  assign wb_stb = ((i_wb_stb) && (!o_wb_stall));
+  assign write_stb = ((wb_stb) && (i_wb_we));
+  // assign  read_stb  = ((wb_stb)&&(!i_wb_we));
+  assign wb_cmd_stb = (!r_cmd_busy) && (write_stb) && (i_wb_addr == SDSPI_CMD_ADDRESS); //Write to cmd reg.
+  assign wb_isr_stb = write_stb && (i_wb_addr == SDSPI_ISR_ADDRESS);  //Write to isr reg.
+  assign wb_ien_stb = write_stb && (i_wb_addr == SDSPI_IEN_ADDRESS);  //Write to ien reg.
+  assign wb_addr = i_wb_addr;
+  assign wb_data = i_wb_data;
+  assign new_data = (i_wb_stb) && (!o_wb_stall) && (i_wb_we) && (i_wb_addr == SDSPI_DAT_ADDRESS);
 
-      initial r_wb_stb = 1'b0;
-      always @(posedge i_clk) r_wb_stb <= ((i_wb_stb) && (!o_wb_stall));
-
-      initial r_write_stb = 1'b0;
-      always @(posedge i_clk) r_write_stb <= ((i_wb_stb) && (!o_wb_stall) && (i_wb_we));
-
-      initial r_wb_cmd_stb = 1'b0;
-      always @(posedge i_clk)
-        r_wb_cmd_stb <= (!r_cmd_busy)&&(i_wb_stb)&&(!o_wb_stall)&&(i_wb_we)
-          &&(i_wb_addr == SDSPI_CMD_ADDRESS);
-
-      always @(posedge i_clk)
-        r_new_data <= (i_wb_stb) && (!o_wb_stall) && (i_wb_we) && (i_wb_addr == SDSPI_DAT_ADDRESS);
-
-      always @(posedge i_clk) r_wb_addr <= i_wb_addr;
-
-      always @(posedge i_clk) r_wb_data <= i_wb_data;
-
-      assign wb_stb = r_wb_stb;
-      assign write_stb = r_write_stb;
-      assign wb_cmd_stb = r_wb_cmd_stb;
-      assign new_data = r_new_data;
-      assign wb_addr = r_wb_addr;
-      assign wb_data = r_wb_data;
-      // }}}
-    end
-  endgenerate
-  // }}}
   ////////////////////////////////////////////////////////////////////////
   //
   // Lower-level SDSPI driver
@@ -638,23 +600,22 @@ module sdspi #(
 
   always @(*)
     card_status = {
-      8'h00,  // 8b
-      2'b0,
-      r_watchdog_err,
-      i_sd_reset,  // 4b
-      !card_present,
-      card_removed,
+      10'h000,  // 10b
+      r_watchdog_err,  // 1b
+      i_sd_reset,  // 1b
+      !card_present,  // 1b
+      card_removed,  // 1b
       1'b0,
       1'b0,
-      r_cmd_err,
-      r_cmd_busy,
+      r_cmd_err,  // 1b
+      r_cmd_busy,  // 1b
       1'b0,
-      r_fifo_id,  // 4b
-      r_use_fifo,
-      write_to_card,
-      2'b00,  // 4b
-      r_last_r_one
-    };  // 8b
+      r_fifo_id,  // 1b
+      r_use_fifo,  //1b
+      write_to_card,  // 1b
+      2'b00,  // 2b
+      r_last_r_one  // 8b
+    };
 
   always @(posedge i_clk)
     case (pipe_addr)
@@ -662,6 +623,9 @@ module sdspi #(
       SDSPI_DAT_ADDRESS: o_wb_data <= r_data_reg;
       SDSPI_FIFO_A_ADDR: o_wb_data <= fifo_a_word;
       SDSPI_FIFO_B_ADDR: o_wb_data <= fifo_b_word;
+      SDSPI_ISR_ADDRESS: o_wb_data <= {30'b0, isr};
+      SDSPI_IEN_ADDRESS: o_wb_data <= {30'b0, ien};
+      default: o_wb_data <= 32'b0;
     endcase
 
   initial dly_stb = 0;
@@ -685,8 +649,34 @@ module sdspi #(
   initial last_busy = 0;
   always @(posedge i_clk) last_busy <= r_cmd_busy;
 
-  initial o_int = 0;
-  always @(posedge i_clk) o_int <= (!r_cmd_busy) && (last_busy) || (!card_removed && !card_present);
+  initial begin
+    isr = 2'b00;
+    ien = 2'b00;
+  end
+
+  always @(posedge i_clk) begin
+    if (i_sd_reset) begin
+      isr <= 2'b00;
+      ien <= 2'b00;
+    end else begin
+      //Set interrupt when no longer busy.
+      if (!r_cmd_busy && last_busy) isr[IRQ_BUSY_BIT] <= 1'b1;
+
+      //Set interrupt if card removed.
+      if (!card_removed && !card_present) isr[ISR_CARD_REMOVED_BIT] <= 1'b1;
+
+      //Clear/ack interrupt by writing 1 to corresponding bit position in
+      //Wishbone register.
+      if (wb_isr_stb) isr <= isr & ~wb_data[1:0];
+
+      //IRQ enable register.
+      if (wb_ien_stb) ien <= wb_data[1:0];
+    end
+  end
+
+  //Only active and enabled interrupt bit can raise the interrupt signal.
+  assign o_int = |(isr & ien);
+
   // }}}
   ////////////////////////////////////////////////////////////////////////
   //
@@ -828,7 +818,7 @@ module sdspi #(
       i_wb_cyc,
       i_wb_stb,
       i_wb_we,
-      i_wb_addr,
+      i_wb_addr[1:0],
       i_wb_data,
       i_wb_sel,
       o_wb_stall,
@@ -840,10 +830,7 @@ module sdspi #(
       f_outstanding
   );
 
-  always @(*)
-    if (i_wb_cyc)
-      assert(f_outstanding == (o_wb_ack ? 1:0) + (dly_stb ? 1:0)
-      + (OPT_EXTRA_WB_CLOCK ? wb_stb : 0));
+  always @(*) if (i_wb_cyc) assert (f_outstanding == (o_wb_ack ? 1 : 0) + (dly_stb ? 1 : 0));
 
   ////////////////////////////////////////////////////////////////////////
   //

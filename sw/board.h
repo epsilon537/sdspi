@@ -1,7 +1,7 @@
 #ifndef BOARD_H
 #define BOARD_H
 
-//BoxLambda Board Definitions for SDSPI SW, derived from 
+//BoxLambda Board Definitions for SDSPI SW, derived from
 //https://github.com/ZipCPU/zbasic/blob/master/sw/zlib/board.h
 
 #define _BOARD_HAS_SDSPI
@@ -26,8 +26,12 @@
 #define	SDSPI_READ_SECTOR	((SDSPI_CMD|SDSPI_CLEARERR|SDSPI_FIFO_OP)+17)
 #define	SDSPI_WRITE_SECTOR	((SDSPI_CMD|SDSPI_CLEARERR|SDSPI_WRITEOP)+24)
 
+//Bit definitions (in the form of masks) for registers sd_isr and sd_ien.
+#define SDCARD_IRQ_BUSY_MASK 0x1
+#define SDCARD_IRQ_CARD_REMOVED_MASK 0x2
+
 typedef	struct SDSPI_S {
-	unsigned	sd_ctrl, sd_data, sd_fifo[2];
+	unsigned	sd_ctrl, sd_data, sd_fifo[2], sd_isr, sd_ien;
 } SDSPI;
 
 static volatile SDSPI *const _sdcard = ((SDSPI *)0x10000020);

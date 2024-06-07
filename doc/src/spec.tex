@@ -22,6 +22,8 @@
 %% Creator:	Dan Gisselquist, Ph.D.
 %%		Gisselquist Technology, LLC
 %%
+%% BoxLambda amendment by epsilon537.
+%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% }}}
 %% Copyright (C) 2016-2023, Gisselquist Technology, LLC
@@ -57,7 +59,7 @@
 %
 % Revision level.  If you change this, be sure to change the revision history
 % to match it
-\revision{Rev.~0.31}
+\revision{Rev.~0.32}
 \begin{document}
 \pagestyle{gqtekspecplain}
 \titlepage
@@ -79,6 +81,7 @@ with this program.  If not, see \texttt{http://www.gnu.org/licenses/} for a copy
 \end{license}
 \begin{revisionhistory}
 % Any changes here need to also be made to the \revision{} in the prologue
+0.32 & 06/07/2024 & epsilon537 & Added BoxLambda amendment.\\\hline
 0.31 & 11/29/2019 & Gisselquist & Fixed the bit mapping in Fig.~\ref{fig:CMD}\\\hline
 0.3 & 11/05/2019 & Gisselquist & Major internal rewrite, formal properties\\\hline
 0.2 & 10/21/2019 & Gisselquist & Card detect feature \\\hline
@@ -866,6 +869,30 @@ The final bus of 32--wires, {\tt o\_debug}, is defined internally and used
 when/if necessary to debug the core and watch what is going on within it.
 These wires may be left unconnected in most implementations, as they are not
 necessary for using the actually controller.
+
+\chapter{BoxLambda Amendment}
+
+The BoxLambda variant of this SDSPI Controller adds the following registers
+to the core:
+
+\begin{table}[htbp]
+\begin{center}\begin{reglist}
+ISR     &{\tt 0x04} &  2 & R/W & Interrupt Status Register\\\hline
+IEN     &{\tt 0x05} &  2 & R/W & Interrupt Enable Register\\\hline
+\end{reglist}
+\caption{I/O Peripheral Registers BoxLambda Amendment}\label{tbl:ioregs}
+\end{center}\end{table}
+
+The following bit positions are defined in the ISR and IEN registers:
+
+\begin{itemize}
+  \item Bit 0: IRQ\_BUSY\_BIT: This bit gets set when the controller goes from a busy to a non-busy state.
+  \item Bit 1: IRQ\_CARD\_REMOVED\_BIT: This bit gets set when the controller detects that the SD card has been removed.
+\end{itemize}
+
+The SDSPI Controller core raises its {\tt o\_int} interrupt line when the ISR and IEN registers both have at least one bit set in the same bit position.
+
+The host CPU acknowledges/clears interrupts by writing an 1 to corresponding bit position in the ISR register.
 
 % Appendices
 % Index
