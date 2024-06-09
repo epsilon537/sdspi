@@ -663,7 +663,7 @@ module sdspi #(
       if (!r_cmd_busy && last_busy) isr[IRQ_BUSY_BIT] <= 1'b1;
 
       //Set interrupt if card removed.
-      if (!card_removed && !card_present) isr[ISR_CARD_REMOVED_BIT] <= 1'b1;
+      if (!card_removed && !card_present) isr[IRQ_CARD_REMOVED_BIT] <= 1'b1;
 
       //Clear/ack interrupt by writing 1 to corresponding bit position in
       //Wishbone register.
