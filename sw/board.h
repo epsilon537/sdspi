@@ -31,7 +31,7 @@
 #define SDCARD_IRQ_CARD_REMOVED_MASK 0x2
 
 typedef	struct SDSPI_S {
-	unsigned	sd_ctrl, sd_data, sd_fifo[2], sd_isr, sd_ien;
+	unsigned	sd_ctrl, sd_data, sd_fifo[2], isr, ien;
 } SDSPI;
 
 static volatile SDSPI *const _sdcard = ((SDSPI *)0x10000020);
