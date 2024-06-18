@@ -109,12 +109,12 @@ static const int  SDINFO  = 0;
 
 //BoxLambda
 void sdcard_irq_clr(unsigned irq_mask) {
-  _sdcard->isr = irq_mask;
+  _sdcard->sd_isr = irq_mask;
 }
 
 //BoxLambda
 void sdcard_ien(unsigned irq_mask) {
-  _sdcard->ien = irq_mask;
+  _sdcard->sd_ien = irq_mask;
 }
 
 int  sdcard_read_ocr(void) {
